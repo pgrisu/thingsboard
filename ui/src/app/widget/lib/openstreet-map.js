@@ -19,7 +19,7 @@ import 'leaflet-providers';
 
 export default class TbOpenStreetMap {
 
-	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, mapProvider, credentials) {
+	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, mapProvider, credentials) {
 
 		this.utils = utils;
 		this.defaultZoomLevel = defaultZoomLevel;
@@ -33,12 +33,16 @@ export default class TbOpenStreetMap {
 			};
 		}
 
-		if (mapProvider.startsWith("HERE.")) {
+		if (mapProvider.name.startsWith("HERE.")) {
 			credentials.app_id = credentials.app_id || "AhM6TzD9ThyK78CT3ptx";
 			credentials.app_code = credentials.app_code || "p6NPiITB3Vv0GMUFnkLOOg";
 		}
 
 		this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
+
+		if (disableScrollZooming) {
+			this.map.scrollWheelZoom.disable();
+		}
 
 		var tileLayer = mapProvider.isCustom ? L.tileLayer(mapProvider.name) : L.tileLayer.provider(mapProvider.name, credentials);
 		tileLayer.addTo(this.map);
@@ -164,6 +168,15 @@ export default class TbOpenStreetMap {
 		var popup = L.popup();
 		popup.setContent('');
 		marker.bindPopup(popup, {autoClose: settings.autocloseTooltip, closeOnClick: false});
+		if (settings.displayTooltipAction == 'hover') {
+			marker.off('click');
+			marker.on('mouseover', function () {
+				this.openPopup();
+			});
+			marker.on('mouseout', function () {
+				this.closePopup();
+			});
+		}
 		this.tooltips.push({
 			markerArgs: markerArgs,
 			popup: popup,
